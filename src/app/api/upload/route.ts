@@ -77,9 +77,14 @@ export async function POST(request: Request) {
       count++;
     }
 
-    return NextResponse.json({ message: `Successfully processed ${count} records.` });
+    return NextResponse.json({ 
+      message: count > 0 
+        ? `Successfully processed ${count} records.`
+        : `0 records processed. Check that your file has the required columns: "Employee Number", "Payroll Month", "Gross(A)", "Net Pay(A-B-C)", etc.`
+    });
   } catch (error: any) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: error.message || 'Error processing file' }, { status: 500 });
+    const message = error?.message || error?.toString() || 'Error processing file';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

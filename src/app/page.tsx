@@ -25,6 +25,7 @@ export default function Dashboard() {
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [uploadMessage, setUploadMessage] = useState('');
   const [formData, setFormData] = useState({
     employeeId: '',
     employeeName: '',
@@ -66,14 +67,19 @@ export default function Dashboard() {
         method: 'POST',
         body: formData,
       });
+      const json = await res.json();
       if (res.ok) {
-        await fetchData(); // Refresh data
+        await fetchData();
+        setUploadMessage(`✓ ${json.message}`);
+        setTimeout(() => setUploadMessage(''), 5000);
       } else {
-        alert('Upload failed');
+        setUploadMessage(`✗ Upload failed: ${json.error || 'Unknown error'}`);
+        setTimeout(() => setUploadMessage(''), 8000);
       }
     } catch (e) {
       console.error(e);
-      alert('Upload failed');
+      setUploadMessage('✗ Upload failed: Network error');
+      setTimeout(() => setUploadMessage(''), 8000);
     } finally {
       setUploading(false);
     }
@@ -181,6 +187,17 @@ export default function Dashboard() {
             </div>
           </div>
         </header>
+
+        {uploadMessage && (
+          <div className={cn(
+            "px-4 py-3 rounded-xl text-sm font-medium border",
+            uploadMessage.startsWith('✓')
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+              : "bg-rose-500/10 border-rose-500/20 text-rose-400"
+          )}>
+            {uploadMessage}
+          </div>
+        )}
 
         {loading && !data ? (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
