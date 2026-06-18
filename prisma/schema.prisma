@@ -30,7 +30,17 @@ model PayrollRecord {
   pfEmployee          Float
   professionalTax     Float
   totalDeductions     Float
+  totalContributions  Float    @default(0)
   netPay              Float
+  totalNetPay         Float    @default(0)
+  incomeTax           Float    @default(0)
+  variablePay         Float    @default(0)
+  voluntaryPF         Float    @default(0)
+  npsEmployer         Float    @default(0)
+  loanEmi             Float    @default(0)
+  cashAdvance         Float    @default(0)
+  settlementAdvance   Float    @default(0)
+  totalReimbursements Float    @default(0)
   monthIdentifier     String
 
   createdAt           DateTime @default(now())
