@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { 
   Upload, FileSpreadsheet, Activity, DollarSign, Users, Briefcase, 
-  TrendingUp, TrendingDown, RefreshCw, AlertCircle
+  TrendingUp, TrendingDown, RefreshCw, AlertCircle, Edit, Plus, X
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -24,6 +24,16 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    employeeId: '',
+    employeeName: '',
+    functionRole: '',
+    department: '',
+    payrollMonth: '',
+    gross: '',
+    netPay: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchData = async () => {
@@ -88,6 +98,26 @@ export default function Dashboard() {
     }
   };
 
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('/api/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setShowModal(false);
+        fetchData();
+      } else {
+        alert('Update failed');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Update failed');
+    }
+  };
+
   const formatCurrency = (val: number) => 
     new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
@@ -105,6 +135,13 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowModal(true)}
+              className="px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-all text-indigo-400 font-medium flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              <span className="hidden sm:inline">Manual Update</span>
+            </button>
             <button 
               onClick={fetchData}
               className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-800 transition-all text-slate-300 hover:text-white group"
@@ -273,41 +310,37 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* Data Table Preview */}
+            {/* Function Scope Table */}
             <div className="p-6 rounded-3xl border border-slate-800/60 bg-slate-900/40 backdrop-blur-xl shadow-2xl">
               <h3 className="text-lg font-medium text-slate-200 mb-6 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-400" />
-                Recent Records
+                <Briefcase className="w-5 h-5 text-indigo-400" />
+                Scope of Manual Data Updation
               </h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-800 text-slate-400 text-sm">
-                      <th className="pb-3 font-medium px-4">Employee</th>
-                      <th className="pb-3 font-medium px-4">Department</th>
-                      <th className="pb-3 font-medium px-4">Month</th>
-                      <th className="pb-3 font-medium px-4 text-right">Gross Pay</th>
-                      <th className="pb-3 font-medium px-4 text-right">Net Pay</th>
+                      <th className="pb-3 font-medium px-4">Function</th>
+                      <th className="pb-3 font-medium px-4 text-right">Count of Employee</th>
+                      <th className="pb-3 font-medium px-4 text-right">Total Net Pay(A-B-C+D+E+F)</th>
                     </tr>
                   </thead>
                   <tbody className="text-sm divide-y divide-slate-800/50">
-                    {data.rawRecords.slice(-5).reverse().map((record: any, i: number) => (
+                    {data.functionStats?.map((stat: any, i: number) => (
                       <tr key={i} className="group hover:bg-slate-800/20 transition-colors">
-                        <td className="py-4 px-4">
-                          <p className="font-medium text-slate-200">{record.employeeName}</p>
-                          <p className="text-xs text-slate-500">{record.employeeId}</p>
-                        </td>
-                        <td className="py-4 px-4 text-slate-300">
-                          <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-800/80 text-xs border border-slate-700/50">
-                            {record.department}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-slate-300">{record.monthIdentifier}</td>
-                        <td className="py-4 px-4 text-right font-medium text-slate-200">{formatCurrency(record.gross)}</td>
-                        <td className="py-4 px-4 text-right font-medium text-emerald-400">{formatCurrency(record.netPay)}</td>
+                        <td className="py-4 px-4 font-medium text-slate-200 capitalize">{stat.name}</td>
+                        <td className="py-4 px-4 text-right text-slate-300">{stat.count}</td>
+                        <td className="py-4 px-4 text-right font-medium text-emerald-400">{formatCurrency(stat.totalNet)}</td>
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-slate-700 bg-slate-800/30">
+                      <td className="py-4 px-4 font-bold text-slate-100">Total</td>
+                      <td className="py-4 px-4 text-right font-bold text-slate-100">{data.functionTotal?.count || 0}</td>
+                      <td className="py-4 px-4 text-right font-bold text-emerald-400">{formatCurrency(data.functionTotal?.totalNet || 0)}</td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </div>
@@ -315,6 +348,72 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+      </div>
+
+      {/* Manual Update Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-2xl w-full max-w-lg relative animate-in zoom-in-95 duration-200">
+            <button 
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-semibold text-slate-100 mb-6 flex items-center gap-2">
+              <Edit className="w-5 h-5 text-indigo-400" />
+              Manual Data Updation
+            </h3>
+            
+            <form onSubmit={handleManualSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-400">Employee ID *</label>
+                  <input required value={formData.employeeId} onChange={e => setFormData({...formData, employeeId: e.target.value})} type="text" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="E.g. P00024" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-400">Employee Name</label>
+                  <input value={formData.employeeName} onChange={e => setFormData({...formData, employeeName: e.target.value})} type="text" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="John Doe" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-400">Function *</label>
+                  <input required value={formData.functionRole} onChange={e => setFormData({...formData, functionRole: e.target.value})} type="text" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="E.g. counsellor" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-400">Department</label>
+                  <input value={formData.department} onChange={e => setFormData({...formData, department: e.target.value})} type="text" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="Client Care" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-slate-400">Payroll Month *</label>
+                <input required value={formData.payrollMonth} onChange={e => setFormData({...formData, payrollMonth: e.target.value})} type="text" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="May - 2026" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-400">Gross Pay</label>
+                  <input value={formData.gross} onChange={e => setFormData({...formData, gross: e.target.value})} type="number" step="0.01" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="0.00" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-400">Total Net Pay</label>
+                  <input value={formData.netPay} onChange={e => setFormData({...formData, netPay: e.target.value})} type="number" step="0.01" className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 outline-none transition-all" placeholder="0.00" />
+                </div>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 transition-all font-medium">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white transition-all font-medium flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Save Record
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

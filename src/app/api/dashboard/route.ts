@@ -12,8 +12,9 @@ export async function GET() {
     // Process data for charts
     const monthlyDataMap = new Map();
     const departmentCostMap = new Map();
+    const functionStatsMap = new Map();
 
-    allRecords.forEach(record => {
+    allRecords.forEach((record: any) => {
       // Monthly trend
       if (!monthlyDataMap.has(record.monthIdentifier)) {
         monthlyDataMap.set(record.monthIdentifier, {
@@ -35,6 +36,22 @@ export async function GET() {
         departmentCostMap.set(record.department, 0);
       }
       departmentCostMap.set(record.department, departmentCostMap.get(record.department) + record.gross);
+
+      // Function stats
+      // Standardize function name for grouping (case insensitive)
+      const funcName = record.functionRole?.trim() || 'Unknown';
+      const funcKey = funcName.toLowerCase();
+      
+      if (!functionStatsMap.has(funcKey)) {
+        functionStatsMap.set(funcKey, {
+          name: funcName,
+          count: 0,
+          totalNet: 0
+        });
+      }
+      const funcStat = functionStatsMap.get(funcKey);
+      funcStat.count += 1;
+      funcStat.totalNet += record.netPay;
     });
 
     const monthlyTrend = Array.from(monthlyDataMap.values());
@@ -42,6 +59,13 @@ export async function GET() {
       name: department || 'Unknown',
       value: cost
     })).sort((a, b) => b.value - a.value);
+    
+    // Sort function stats and calculate total
+    const functionStats = Array.from(functionStatsMap.values()).sort((a, b) => b.totalNet - a.totalNet);
+    const functionTotal = functionStats.reduce((acc, curr) => ({
+      count: acc.count + curr.count,
+      totalNet: acc.totalNet + curr.totalNet
+    }), { count: 0, totalNet: 0 });
 
     // Get KPIs
     const latestMonth = monthlyTrend.length > 0 ? monthlyTrend[monthlyTrend.length - 1] : null;
@@ -50,6 +74,8 @@ export async function GET() {
     return NextResponse.json({
       monthlyTrend,
       departmentCosts,
+      functionStats,
+      functionTotal,
       latestKPIs: latestMonth ? {
         totalGross: latestMonth.totalGross,
         totalNet: latestMonth.totalNet,
