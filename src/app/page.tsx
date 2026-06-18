@@ -348,7 +348,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-      </div>
 
       {/* Manual Update Modal */}
       {showModal && (
