@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model PayrollRecord {
+  id                  String   @id @default(cuid())
+  employeeId          String
+  employeeName        String
+  functionRole        String
+  dateOfJoining       String
+  department          String
+  payrollMonth        String
+  payrollType         String
+  actualPayableDays   Float
+  workingDays         Float
+  lossOfPayDays       Float
+  daysPayable         Float
+  remunerationAmount  String
+  basic               Float
+  hra                 Float
+  travelReimbursement Float
+  specialAllowance    Float
+  gross               Float
+  pfEmployer          Float
+  pfEmployee          Float
+  professionalTax     Float
+  totalDeductions     Float
+  netPay              Float
+  monthIdentifier     String
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@unique([employeeId, payrollMonth])
+}
