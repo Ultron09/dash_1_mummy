@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server';
 import * as xlsx from 'xlsx';
 import prisma from '@/lib/prisma';
 
+// Convert Excel serial date to "MMM YYYY" string
+function excelSerialToMonthLabel(serial: any, fallback: string): string {
+  if (typeof serial === 'string' && serial.trim()) return serial.trim();
+  if (typeof serial === 'number') {
+    const date = xlsx.SSF.parse_date_code(serial);
+    if (date) {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${months[date.m - 1]} ${date.y}`;
+    }
+  }
+  return fallback;
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -55,8 +68,8 @@ export async function POST(request: Request) {
         pfEmployee: parseFloatClean(row['PF Employee']),
         professionalTax: parseFloatClean(row['Professional Tax']),
         totalDeductions: parseFloatClean(row['Total Deductions(C)']),
-        netPay: parseFloatClean(row['Net Pay(A-B-C)']),
-        monthIdentifier: row['Month']?.toString() || payrollMonth,
+        netPay: parseFloatClean(row['Total Net Pay(A-B-C+D+E+F)']) || parseFloatClean(row['Net Pay(A-B-C)']),
+        monthIdentifier: excelSerialToMonthLabel(row['Month'], payrollMonth),
       };
 
       await prisma.payrollRecord.upsert({
