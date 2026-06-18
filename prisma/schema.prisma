@@ -9,39 +9,98 @@ datasource db {
 
 model PayrollRecord {
   id                  String   @id @default(cuid())
+
+  // ── Identity ────────────────────────────────────────────────────────────────
   employeeId          String
   employeeName        String
+  dateOfBirth         String?
+  gender              String?
+  workLocation        String?
+  reportingManagerId  String?
+
+  // ── Role & employment ────────────────────────────────────────────────────────
   functionRole        String
-  dateOfJoining       String
   department          String
+  employmentType      String?
+  probationEndDate    String?
+  dateOfJoining       String
+
+  // ── Payroll period ───────────────────────────────────────────────────────────
   payrollMonth        String
   payrollType         String
+  monthIdentifier     String
+
+  // ── Attendance ───────────────────────────────────────────────────────────────
   actualPayableDays   Float
   workingDays         Float
   lossOfPayDays       Float
   daysPayable         Float
+  leavesThisMonth     Float    @default(0)
+  lateOrEarlyCount    Int      @default(0)
+  wfhDays             Int      @default(0)
+
+  // ── CTC & increment ──────────────────────────────────────────────────────────
   remunerationAmount  String
+  offerCtc            Float    @default(0)
+  lastIncrementDate   String?
+  lastIncrementPct    Float?
+
+  // ── Gross components ─────────────────────────────────────────────────────────
   basic               Float
   hra                 Float
   travelReimbursement Float
   specialAllowance    Float
   gross               Float
-  pfEmployer          Float
-  pfEmployee          Float
-  professionalTax     Float
-  totalDeductions     Float
-  totalContributions  Float    @default(0)
-  netPay              Float
-  totalNetPay         Float    @default(0)
-  incomeTax           Float    @default(0)
+
+  // ── Variable pay ─────────────────────────────────────────────────────────────
   variablePay         Float    @default(0)
-  voluntaryPF         Float    @default(0)
+  variableTargetPct   Float?
+  variablePayoutPct   Float?
+
+  // ── Employer contributions ───────────────────────────────────────────────────
+  pfEmployer          Float
   npsEmployer         Float    @default(0)
+  gratuityProvision   Float    @default(0)
+  groupHealthPremium  Float    @default(0)
+  trainingCostAmort   Float    @default(0)
+
+  // ── Employee deductions ──────────────────────────────────────────────────────
+  pfEmployee          Float
+  voluntaryPF         Float    @default(0)
+  professionalTax     Float
+  incomeTax           Float    @default(0)
   loanEmi             Float    @default(0)
+  totalContributions  Float    @default(0)
+  totalDeductions     Float
+
+  // ── Net pay ──────────────────────────────────────────────────────────────────
+  netPay              Float
   cashAdvance         Float    @default(0)
   settlementAdvance   Float    @default(0)
   totalReimbursements Float    @default(0)
-  monthIdentifier     String
+  totalNetPay         Float    @default(0)
+
+  // ── Tax & statutory flags ────────────────────────────────────────────────────
+  taxRegime           String?
+  investmentDecl      Float    @default(0)
+  esicApplicable      Boolean  @default(false)
+  gratuityEligible    Boolean  @default(false)
+  payslipDelivered    Boolean  @default(false)
+
+  // ── Leave ────────────────────────────────────────────────────────────────────
+  earnedLeaveBalance  Float    @default(0)
+
+  // ── Performance ──────────────────────────────────────────────────────────────
+  perfRatingCurrent   String?
+  perfRatingPrevious  String?
+  promotionCount      Int      @default(0)
+  hiringSource        String?
+
+  // ── Tier 3 — computed/predictive (nullable, populated by model or derive) ────
+  attritionRiskScore  Float?
+  salaryCompressionRatio Float?
+  financialStressIndex Float?
+  projectedAnnualTax  Float?
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

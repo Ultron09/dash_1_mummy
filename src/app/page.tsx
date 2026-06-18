@@ -360,6 +360,72 @@ export default function Dashboard() {
               </div>
             )}
 
+            {/* Compliance Flags */}
+            {(data.complianceFlags || []).length > 0 && (
+              <div className="p-6 rounded-3xl border border-slate-800/60 bg-slate-900/40 backdrop-blur-xl shadow-2xl">
+                <h3 className="text-base font-medium text-slate-200 mb-4 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-indigo-400" />Compliance Checklist
+                </h3>
+                <div className="space-y-3">
+                  {data.complianceFlags.map((f: any) => {
+                    const s = f.severity==='red' ? SEVERITY.red : f.severity==='amber' ? SEVERITY.amber : {bg:'bg-emerald-500/10',text:'text-emerald-400',border:'border-emerald-500/20',dot:'bg-emerald-500'};
+                    return (
+                      <div key={f.field} className={cn('flex items-start gap-4 p-3 rounded-xl border', s.border, s.bg)}>
+                        <span className={cn('w-2 h-2 rounded-full mt-1.5 shrink-0', s.dot)} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className={cn('text-sm font-semibold', s.text)}>{f.field}</span>
+                            {f.missing > 0
+                              ? <span className={cn('text-xs font-bold px-2 py-0.5 rounded-full border', s.bg, s.text, s.border)}>{f.missing} issue{f.missing!==1?'s':''}</span>
+                              : <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">✓ Clear</span>}
+                          </div>
+                          <p className="text-xs text-slate-400 mt-0.5">{f.note}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Attrition Risk Leaderboard */}
+            {(data.riskLeaderboard || []).length > 0 && (
+              <div className="p-6 rounded-3xl border border-rose-500/20 bg-rose-500/5 backdrop-blur-xl">
+                <h3 className="text-base font-medium text-rose-300 mb-4 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />Attrition Risk Leaderboard — Top 10
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-rose-500/20 text-slate-400 text-xs uppercase tracking-wide">
+                        <th className="pb-3 px-3 font-medium">Employee</th>
+                        <th className="pb-3 px-3 font-medium">Role</th>
+                        <th className="pb-3 px-3 text-right font-medium">Tenure</th>
+                        <th className="pb-3 px-3 text-center font-medium">Risk Score</th>
+                        <th className="pb-3 px-3 text-center font-medium">Stress Index</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/40">
+                      {data.riskLeaderboard.map((r: any) => {
+                        const rc = r.score>=60?'text-rose-400 bg-rose-500/20 border-rose-500/30':r.score>=35?'text-amber-400 bg-amber-500/20 border-amber-500/30':'text-emerald-400 bg-emerald-500/20 border-emerald-500/30';
+                        const sc = (r.stressIndex||0)>=50?'text-rose-400':(r.stressIndex||0)>=25?'text-amber-400':'text-emerald-400';
+                        return (
+                          <tr key={r.employeeId} className="hover:bg-rose-500/5 transition-colors">
+                            <td className="py-3 px-3 font-medium text-slate-200">{r.name}</td>
+                            <td className="py-3 px-3 text-slate-400 text-xs">{r.role}</td>
+                            <td className="py-3 px-3 text-right text-slate-300">{r.tenure} yrs</td>
+                            <td className="py-3 px-3 text-center"><span className={cn('inline-block px-2.5 py-0.5 rounded-full text-xs font-bold border', rc)}>{r.score}/100</span></td>
+                            <td className={cn('py-3 px-3 text-center text-sm font-semibold', sc)}>{r.stressIndex ?? '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-slate-500 mt-3">Risk score from tenure, salary compression, VPF/NPS adoption, increment history, and leave balance.</p>
+              </div>
+            )}
+
           </div>
         )}
       </div>
